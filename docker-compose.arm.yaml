@@ -1,0 +1,30 @@
+version: '3'
+services:
+
+  lights:
+    image: jacobh2/ledlight:armhf-latest
+    command: ["python3", "main.py"]
+    privileged: true
+    network_mode: "host"
+    environment:
+      - THIS_ROOM=hallway
+      - PIN_RED=17
+      - PIN_GREEN=22
+      - PIN_BLUE=24
+      - AUTH_DOMAIN=dev-kuvoy9-x.auth0.com
+      - API_AUDIENCE=https://icehack.asuscomm.com/ledlight
+    ports:
+      - 8080:8080
+    restart: always
+
+  nginx:
+    image: nginx:mainline-alpine
+    volumes:
+      - ./webserver/nginx.conf:/etc/nginx/nginx.conf
+      - ./webserver/cert.pem:/cert.pem
+      - ./webserver/key.pem:/key.pem
+    ports:
+      - 8085:8085
+      - 8443:8443
+    network_mode: "host"
+    restart: always

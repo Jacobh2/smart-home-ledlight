@@ -1,0 +1,30 @@
+version: '3'
+services:
+
+  lights:
+    build:
+      context: controller
+      dockerfile: Dockerfile
+    command: ["uwsgi", "--ini", "uwsgi.ini"]
+    # privileged: true
+    environment:
+      - THIS_ROOM=hallway
+      - PIN_RED=17
+      - PIN_GREEN=22
+      - PIN_BLUE=24
+      - AUTH_DOMAIN=dev-kuvoy9-x.auth0.com
+      - API_AUDIENCE=https://icehack.asuscomm.com/ledlight
+    ports:
+      - 8080:8080
+    restart: always
+
+  nginx:
+    image: nginx:1.17
+    volumes:
+      - ./webserver/nginx.conf:/etc/nginx/nginx.conf
+      - ./webserver/cert.pem:/cert.pem
+      - ./webserver/key.pem:/key.pem
+    ports:
+      - 8085:80
+      - 8443:443
+    restart: always

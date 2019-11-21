@@ -1,0 +1,8 @@
+Flask
+git+https://github.com/Jacobh2/smart-home-python.git
+flask-cors
+python-jose
+requests
+uwsgi
+setuptools
+cryptography

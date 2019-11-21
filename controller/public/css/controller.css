@@ -1,0 +1,130 @@
+/* START GOOGLE ICONS */
+
+/* fallback */
+@font-face {
+    font-family: 'Material Icons';
+    font-style: normal;
+    font-weight: 400;
+    src: url(https://fonts.gstatic.com/s/materialicons/v41/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2) format('woff2');
+  }
+  
+  .material-icons {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+/* END GOOGLE ICONS */
+
+@font-face {
+    font-family: Montserrat;
+    src: url(Montserrat-Bold.otf);
+    font-weight: bold;
+}
+@font-face {
+    font-family: Montserrat;
+    src: url(Montserrat-Regular.otf);
+}
+
+html * {
+    font-family: Montserrat;
+}
+
+.flex-container-row {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.flex-item {
+    margin-left: auto;
+}
+
+.material-icons.mediumicon {
+    font-size: 350%;
+}
+
+.material-icons.bigicon {
+    font-size: 450%;
+}
+
+h1 {
+    text-transform: uppercase;
+}
+
+.preset{
+    border-radius: 5px;
+    padding: 10px;
+    background-color: white; 
+    color: black; 
+    border: 2px solid #000;
+}
+
+.preset:focus {
+    outline: none;
+    box-shadow: 0px 0px 10px rgb(156, 100, 21);
+  }
+
+.preset-row {
+    padding-top: 5%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.timeselector {
+    font-size: 200%;
+}
+
+#snackbar {
+    visibility: hidden;
+    min-width: 250px;
+    margin-left: -125px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 2px;
+    padding: 16px;
+    position: fixed;
+    z-index: 1;
+    left: 50%;
+    bottom: 30px;
+    font-size: 17px;
+}
+
+#snackbar.show {
+    visibility: visible;
+    -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+@-webkit-keyframes fadein {
+    from {bottom: 0; opacity: 0;} 
+    to {bottom: 30px; opacity: 1;}
+}
+
+@keyframes fadein {
+    from {bottom: 0; opacity: 0;}
+    to {bottom: 30px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+    from {bottom: 30px; opacity: 1;} 
+    to {bottom: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+    from {bottom: 30px; opacity: 1;}
+    to {bottom: 0; opacity: 0;}
+}
