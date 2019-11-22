@@ -6,6 +6,10 @@ from smart_home import error
 
 import logging
 
+from threading import Thread
+from time import sleep
+from uuid import uuid4
+
 
 class GoogleHomeActionHandler(RequestHandler):
     def __init__(self, led, name, nickname, fullname, room):
@@ -29,22 +33,26 @@ class GoogleHomeActionHandler(RequestHandler):
             actions.ACTION_COMMAND_COLOR_ABSOLUTE: self._set_color,
             actions.ACTION_COMMAND_ON_OFF: self._set_on_off,
         }
+        self.time_sleep_report_state = 10
+        # Start report state thread
+        self.report_state_thread = Thread(
+            name="ReportState", target=self.report_state_threaded, daemon=True
+        )
+        self.report_state_thread.start()
 
-    def handle_query_request(self, input_data):
-        # Parse the request
-        devices = input_data["payload"]["devices"]
-
+    def _format_device_state(self, device_ids):
         device_status = dict()
-        for device in devices:
-            device_id = device.get("id")
+        for device_id in device_ids:
 
-            if not device_id:
+            self.logger.info("Handing state for device with id %s", device_id)
+            device = self.get_device(device_id)
+
+            if not device:
                 raise error.RequestError(
                     self.current_request_id, error.ERROR_DEVICE_NOT_FOUND
                 )
 
-            self.logger.info("Handing QUERY for device with id %s", device_id)
-            device_obj = self.get_device(device_id).obj
+            device_obj = device.obj
 
             # Get the status of this device
             device_status[device_id] = {
@@ -53,7 +61,13 @@ class GoogleHomeActionHandler(RequestHandler):
                 "brightness": round(device_obj.brightness * 100.0),
                 "color": {"spectrumRGB": device_obj.color_rgb_spectrum},
             }
+        return device_status
 
+    def handle_query_request(self, input_data):
+        # Parse the request
+        devices = input_data["payload"]["devices"]
+        device_ids = [device["id"] for device in devices]
+        device_status = self._format_device_state(device_ids)
         return self.format_query_response(device_status)
 
     def handle_execute_request(self, input_data):
@@ -114,3 +128,22 @@ class GoogleHomeActionHandler(RequestHandler):
         ret["status"] = "SUCCESS"
         ret["states"] = {"on": True, "online": True}
 
+    def report_state_threaded(self):
+        try:
+            while True:
+                # Gather state
+                state = self._format_device_state(self.devices.keys())
+                payload = {
+                    "requestId": str(uuid4()),
+                    "agentUserId": self.agent_user_id,
+                    "payload": {"devices": {"states": state}},
+                }
+                self.logger.debug("About to report state %s", state)
+
+                # Report the sate
+                self.report_state(payload)
+
+                # Sleep 10 sec
+                sleep(self.time_sleep_report_state)
+        except Exception:
+            self.logger.exception("Crash during report state")
