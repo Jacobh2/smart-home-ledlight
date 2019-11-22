@@ -40,6 +40,7 @@ class GoogleHomeActionHandler(RequestHandler):
         )
         self.report_state_thread.start()
 
+
     def _format_device_state(self, device_ids):
         device_status = dict()
         for device_id in device_ids:
@@ -138,7 +139,7 @@ class GoogleHomeActionHandler(RequestHandler):
                     "agentUserId": self.agent_user_id,
                     "payload": {"devices": {"states": state}},
                 }
-                self.logger.debug("About to report state %s", state)
+                self.logger.debug("About to report payload %s", payload)
 
                 # Report the sate
                 self.report_state(payload)
