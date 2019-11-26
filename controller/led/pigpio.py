@@ -30,7 +30,10 @@ class PiGPIO(object):
         r, g, b = self.color
         if r is None or g is None or b is None:
             return None
-        return color_utils.rgb_to_hsv(r / 255, g / 255, b / 255)[2]
+        return self.calculate_brightness(r, g, b)
+
+    def calculate_brightness(self, red, green, blue):
+        return color_utils.rgb_to_hsv(red / 255, green / 255, blue / 255)[2]
 
     @property
     def color(self):
@@ -43,6 +46,10 @@ class PiGPIO(object):
     @property
     def color_hex(self):
         return color_utils.dec_to_hex(*self.color)
+
+    def calculate_rgb_spectrum(self, red, green, blue):
+        color_hex = color_utils.dec_to_hex(red, green, blue)
+        return color_utils.hex_to_rgb_dec(color_hex[1:])
 
     @property
     def color_rgb_spectrum(self):

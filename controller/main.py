@@ -10,6 +10,7 @@ from flask_cors import cross_origin
 from os import system
 from os.path import join
 from os import environ
+from os.path import exists
 
 from room.room import Room
 
@@ -43,6 +44,7 @@ if setting.THIS_ROOM:
     )
     room.bind(app)
     ghome_handler = GoogleHomeActionHandler(room.led, "Hallway LED Strip", "Hallway Strip", "Hallway Led Strip", "Hallway")
+    logger.info("Google Home Action Handler created. Have agent id: %s", ghome_handler.agent_user_id)
 else:
     raise Exception("No room set for this room! Please set 'THIS_ROOM' env")
 
