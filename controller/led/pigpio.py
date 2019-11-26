@@ -1,5 +1,7 @@
 import os
 import logging
+import subprocess
+from threading import Semaphore
 
 from led import color_utils
 
@@ -17,23 +19,26 @@ class PiGPIO(object):
 
     def __init__(self, pin_red, pin_green, pin_blue):
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.RED_STATE = 0
-        self.GREEN_STATE = 0
-        self.BLUE_STATE = 0
 
         self.pin_red = pin_red
         self.pin_green = pin_green
         self.pin_blue = pin_blue
+        self.semaphore = Semaphore()
 
     @property
     def brightness(self):
-        return color_utils.rgb_to_hsv(
-            self.RED_STATE / 255, self.GREEN_STATE / 255, self.BLUE_STATE / 255
-        )[2]
+        r, g, b = self.color
+        if r is None or g is None or b is None:
+            return None
+        return color_utils.rgb_to_hsv(r / 255, g / 255, b / 255)[2]
 
     @property
     def color(self):
-        return self.RED_STATE, self.GREEN_STATE, self.BLUE_STATE
+        return (
+            self._read_color(self.pin_red),
+            self._read_color(self.pin_green),
+            self._read_color(self.pin_blue),
+        )
 
     @property
     def color_hex(self):
@@ -45,7 +50,7 @@ class PiGPIO(object):
 
     @property
     def is_on(self):
-        return sum(self.color) > 0    
+        return sum(self.color) > 0
 
     def _set_color(self, pin, value):
         """
@@ -59,32 +64,42 @@ class PiGPIO(object):
             )
         command = "pigs p {PIN} {VALUE}".format(PIN=pin, VALUE=value)
         try:
-            self.logger.debug("Executing command '%s'", command)
-            os.system(command)
+            self.logger.debug("About to execute command '%s'", command)
+            with self.semaphore:
+                self.logger.debug("Executing command '%s'", command)
+                os.system(command)
             return value
         except Exception:
             self.logger.exception("Failed to execute command '%s'", command)
             return None
 
-    def set_red(self, value, set_state=True):
-        new_state = self._set_color(self.pin_red, value)
-        if set_state and new_state:
-            self.RED_STATE = new_state
+    def _read_color(self, pin):
+        command = ["pigs", "gdc", str(pin)]
+        try:
+            self.logger.debug("About to execute command '%s'", command)
+            with self.semaphore:
+                self.logger.debug("Executing command '%s'", command)
+                result = subprocess.run(command, stdout=subprocess.PIPE)
+            self.logger.debug("Result: %s", result)
+            if result.returncode == 0:
+                return int(result.stdout.decode().strip())
+        except Exception:
+            self.logger.exception("Failed to execute command '%s'", command)
+        return None
 
-    def set_green(self, value, set_state=True):
-        new_state = self._set_color(self.pin_green, value)
-        if set_state and new_state:
-            self.GREEN_STATE = new_state
+    def set_red(self, value):
+        self._set_color(self.pin_red, value)
 
-    def set_blue(self, value, set_state=True):
-        new_state = self._set_color(self.pin_blue, value)
-        if set_state and new_state:
-            self.BLUE_STATE = new_state
+    def set_green(self, value):
+        self._set_color(self.pin_green, value)
 
-    def set_color_dec(self, red, green, blue, set_state=True):
-        self.set_red(red, set_state=set_state)
-        self.set_green(green, set_state=set_state)
-        self.set_blue(blue, set_state=set_state)
+    def set_blue(self, value):
+        self._set_color(self.pin_blue, value)
+
+    def set_color_dec(self, red, green, blue):
+        self.set_red(red)
+        self.set_green(green)
+        self.set_blue(blue)
         self.logger.debug("Color set to R:%s, G:%s, B:%s", red, green, blue)
 
     def set_color_hex(self, color):
@@ -106,9 +121,5 @@ class PiGPIO(object):
             raise ValueError("Brightness needs to be max 1.0")
         if value < 0.0:
             raise ValueError("Brightness needs to be min 0.0")
-        self.set_color_dec(
-            self.RED_STATE * value,
-            self.GREEN_STATE * value,
-            self.BLUE_STATE * value,
-            set_state=False,
-        )
+        r, g, b = self.color
+        self.set_color_dec(r * value, g * value, b * value)
