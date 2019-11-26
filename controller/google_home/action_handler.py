@@ -30,7 +30,7 @@ class GoogleHomeActionHandler(RequestHandler):
         device_status = dict()
         for device_id in device_ids:
 
-            self.logger.info("Handing state for device with id %s", device_id)
+            self.logger.info("Handing state for device with id '%s'", device_id)
             device = self.get_device(device_id)
 
             if not device:
@@ -40,16 +40,35 @@ class GoogleHomeActionHandler(RequestHandler):
 
             device_obj = device.obj
 
+            device_color = device_obj.color
+            self.logger.info("Device have color %s", device_color)
+
+            if device_color is None:
+                device_status[device_id] = {"online": False}
+                continue
+
+            on = device_color is not None and sum(device_color) > 0
+
+            if not on:
+                device_status[device_id] = {"on": False, "online": True}
+                continue
+
             # Get the status of this device
             device_status[device_id] = {
-                "on": device_obj.is_on,
+                "on": True,
                 "online": True,
-                "brightness": round(device_obj.brightness * 100.0),
-                "color": {"spectrumRGB": device_obj.color_rgb_spectrum},
+                "brightness": round(
+                    device_obj.calculate_brightness(*device_color) * 100.0
+                ),
+                "color": {
+                    "spectrumRGB": device_obj.calculate_rgb_spectrum(*device_color)
+                },
             }
+
         return device_status
 
     def set_brightness(self, ret, device, value):
+        # return_payload, device, params
         brightness = value["brightness"]
         device.obj.set_brightness(brightness / 100.0)
         if "ids" in ret:
